@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    
+    <style>
+    
+    .jumbotron {
+    	opacity:0.8;
+    }
+    
+    #loaderDiv {
+    	display:none;
+    	text-align:center;
+    }
+    
+    
+    </style>
+
+    <title>How Big is Your WordPress?</title>
+  </head>
+  <body>
+  
+  	<div class="jumbotron">
+	  <h1 class="display-4 site-title">How Many WordPress Posts Ya Got on that Blog?</h1>
+  
+	  <p class="lead">With one simple click, Zoltar can peer into the soul of your blog and determine how much of a WordPress blogger you really are...</p>
+	  
+	  <form id="zoltar">	
+	  
+	  
+	    <div class="form-group">
+    		<label for="blogurl">WordPress Site</label>
+   			 <input type="text" class="form-control" id="blogurl" aria-describedby="blogHelp" value="https://" >
+   <p> <small id="blogHelp" class="form-text text-muted">You do know your blog's URL, right?</small></p>
+    
+    <button type="button" id="gimme" class="btn btn-primary">Tell Me</button>
+  		</div>
+  		
+  			  
+	  </form>
+	  
+	  	  <p class="text-muted"><small>This here is another little web hackery by <a href="https://cog.dog/" target="_blank">@cogdog</a>. <br/><em>Background Image: <a title="Dragoncon 2017 Zoltar 1" href="https://flickr.com/photos/cbroders/36570910900">Dragoncon 2017 Zoltar 1</a> flickr photo by <a href="https://flickr.com/people/cbroders">Counse</a> shared under a <a href="https://creativecommons.org/licenses/by/2.0/">Creative Commons (BY) license</a></em></small></p>
+	  
+		<div id="loaderDiv">
+			<img src="images/ajax-loader.gif" alt="spinny loader">
+		</div>
+
+	  <h2 class="display-6 text-center" id="result"></h2>
+	  
+	  
+
+	  
+	  
+	</div>  <!-- jumbotron -->
+	
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.0.3/jquery.backstretch.min.js"></script>	
+
+
+<script>
+    
+$(document).ready(function(){
+
+	$("#loaderDiv").hide();
+	// pretty background, please
+	$.backstretch('images/zoltar.jpg');
+	
+	
+	$( '#blogurl').on('keypress', function(event) {
+		if( event.which == 13 ) {
+			event.preventDefault();
+			$( '#gimme' ).trigger('click');
+		
+		}
+	});
+
+
+	// response to button, go...
+	$( '#gimme' ).on( 'click', function ( ) {
+	
+    	$( "#result" ).text(''); // clear last
+		blog_source = $( "#blogurl" ).val();
+		
+		// url checking
+		if ( blog_source == '' ) {
+			alert('How about putting an URL here, Earl?');
+		
+		} else if ( blog_source.indexOf("https") == -1 ) {
+		
+			// force url to be https, insert an 's", remind 'em
+			// h/t https://stackoverflow.com/a/4364887/2418186
+			$( "#blogurl" ).val( blog_source.substring(0, 4) + 's' + blog_source.substring(4)  );
+			alert('Hey, you need an https:// url to fetch API stuff, try again?');
+			
+		} else {
+			// url good to go, set spinning wheel
+			$("#loaderDiv").show();
+	
+			// tri, trailing "/"
+			if ( blog_source.substr(-1)  == '/' ) {
+				blog_source = blog_source.slice(0, -1);
+			}
+			
+			// check if we are on  not WordPress.com, each has a different endpoint URL
+			if ( blog_source.indexOf('wordpress.com') == -1 ) {
+				// self hosted ajax url
+				var ajaxurl = blog_source + '/wp-json/wp/v2/posts';
+				var wpkind =  'self hosted WordPress blog';
+			
+			} else {
+				// WP.com ajax url
+			  	var ajaxurl = 'https://public-api.wordpress.com/wp/v2/sites/' + blog_source.substring(8) + '/posts';
+			  	var wpkind =  'WordPress.com hosted blog';		
+			}
+
+			// break out the AJAX
+			$.ajax({
+			  url: ajaxurl,
+			  dataType:'json',
+			  cache: false,
+			  timeout: 15000,
+			  success: function(data, status, xhr) {
+			  
+				// hide spinner
+				$("#loaderDiv").hide();
+				
+				// update with count from response header
+				// h/t https://wordpress.stackexchange.com/a/274198/14945
+				$( "#result" ).html('Zoltar found <strong>' + xhr.getResponseHeader("x-wp-total") + '</strong> posts on this ' + wpkind + '. '  + wiseguy(xhr.getResponseHeader("x-wp-total"))  );
+			  },
+			  
+			  error: function(data) {
+				$("#loaderDiv").hide();
+				console.log(data);
+				$( "#result" ).text('Oops, something went wrong! Perhaps that\'s not a WordPress blog URL?  ');
+			  }
+			});
+		}
+	
+   } );
+   
+   
+   function wiseguy(number) {
+   		// create some smart alec responses based on count of posts
+   		
+   		switch(true) {
+   		
+   			case number < 10:
+   				return 'Rookie! Just getting started? Don\'t give up, keep blogging...';
+   			 	break;
+   			 	
+   			case number < 100:
+   				return 'You have something going there. Are you in this for the long haul?';
+   			 	break;
+   			 	
+			case number < 500:
+   				return 'Ahh, you have this thing going well. But stay with it!';
+   			 	break;
+   			 	
+   			case number < 1000:
+   				return 'That is a few more than most bloggers, but by no means a number that might make me blink. Blog about this!';
+   			 	break;
+			 	
+			case number < 2000:
+   				return 'Hmmm I am nodding, you have 4 digits. Kind of a Jim Groom range. Go bigger?';
+   			 	break;
+
+   			case number <= 5000:
+   				return 'Zoltar is very impressed. You are among the few who get this blogging thing.';
+   			 	break;
+   			 	
+   			 default:	
+   			 	return 'You are in the range of the big and legendary. Almost as big as CogDogBlog!';
+   		}
+
+   }	  
+});//ready
+</script>
+  </body>
+</html>
