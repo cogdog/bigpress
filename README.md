@@ -2,7 +2,7 @@
 
 Size as in number of posts. Ask Zoltar to read into the soul of any blog. Provide a URL, and with help from the WordPress API, get a post count. Cause blog size is...
 
-Ask Zoltar via https://code.cog.cog/bigpress
+Ask Zoltar via https://code.cog.dog/bigpress/
 
 hand coded by Alan Levine https://cog.dog or http://cogdogblog.com/
 
